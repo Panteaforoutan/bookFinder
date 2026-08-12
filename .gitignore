@@ -1,0 +1,22 @@
+# secrets
+.env
+
+# python
+__pycache__/
+*.pyc
+.venv/
+
+# uploads (runtime data, not source)
+uploads/*
+!uploads/.gitkeep
+
+# macOS
+.DS_Store
+
+# node / frontend
+bookfinder-ui/node_modules/
+bookfinder-ui/dist/
+
+# scratch / old files
+old files/
+local/
