@@ -7,6 +7,7 @@ fuzzy-match the search query against the recognized titles (`fuzzy_match`)
 """
 
 import argparse
+import base64
 import os
 
 from dotenv import load_dotenv
@@ -28,7 +29,10 @@ def segmentation(img):
             InferenceHTTPClient.run_workflow.
 
     Returns:
-        The workflow result list, contains one bounding-box prediction per detected book.
+        Tuple of (predictions, annotated_image_b64):
+            predictions: List of bounding-box predictions, one per detected book.
+            annotated_image_b64: Base64-encoded JPEG of the input image with all
+                detected books outlined, as returned by the workflow.
     """
     client = InferenceHTTPClient(
         api_url="https://serverless.roboflow.com",
@@ -44,7 +48,26 @@ def segmentation(img):
         },
         use_cache=True
     )
-    return raw_result[0]['predictions']['predictions']
+    result = raw_result[0]
+    return result['predictions']['predictions'], result['annotated_image']
+
+
+def save_annotated_image(annotated_image_b64, img_path):
+    """Decode the workflow's annotated image and save it next to the source image.
+
+    Args:
+        annotated_image_b64: Base64-encoded JPEG string returned by `segmentation()`.
+        img_path: Path to the original shelf image; the annotated copy is saved
+            alongside it with a "_segmented.jpg" suffix.
+
+    Returns:
+        Path the annotated image was saved to.
+    """
+    root, _ = os.path.splitext(img_path)
+    out_path = f"{root}_segmented.jpg"
+    with open(out_path, "wb") as f:
+        f.write(base64.b64decode(annotated_image_b64))
+    return out_path
 
 
 def crop_book(img, boundary):
@@ -207,8 +230,11 @@ def localizer(img_path, query):
         Dict with either:
             {"found": True, "box": [left, top, right, bottom]} on a match, or
             {"found": False, "message": <str>} if no title matched.
+        Either way, an annotated copy of `img_path` showing every detected
+        book is saved alongside it (see `save_annotated_image`).
     """
-    segmentations = segmentation(img_path)
+    segmentations, annotated_image_b64 = segmentation(img_path)
+    save_annotated_image(annotated_image_b64, img_path)
     titles, boundaries = OCR(img_path, segmentations)
     book_index = fuzzy_match(query, titles)
     if book_index is None:
