@@ -11,14 +11,18 @@ def test_segmentation_returns_predictions_list(monkeypatch):
     fake_predictions = [{"x": 1, "y": 2, "width": 3, "height": 4}]
     fake_client = MagicMock()
     fake_client.run_workflow.return_value = [
-        {"predictions": {"predictions": fake_predictions}}
+        {
+            "predictions": {"predictions": fake_predictions},
+            "annotated_image": "fake_b64_image",
+        }
     ]
 
     monkeypatch.setattr(locate, "InferenceHTTPClient", lambda **kwargs: fake_client)
 
-    result = locate.segmentation("shelf.png")
+    predictions, annotated_image_b64 = locate.segmentation("shelf.png")
 
-    assert result == fake_predictions
+    assert predictions == fake_predictions
+    assert annotated_image_b64 == "fake_b64_image"
 
 
 def test_crop_book_leaves_wide_book_unrotated():
@@ -97,7 +101,8 @@ def test_fuzzy_match_returns_none_for_empty_titles():
 
 
 def test_localizer_returns_box_when_match_found(monkeypatch):
-    monkeypatch.setattr(locate, "segmentation", lambda img_path: "fake detections")
+    monkeypatch.setattr(locate, "segmentation", lambda img_path: ("fake detections", "fake_b64"))
+    monkeypatch.setattr(locate, "save_annotated_image", lambda annotated_image_b64, img_path: None)
     monkeypatch.setattr(
         locate, "OCR",
         lambda img_path, detections: (
@@ -113,7 +118,8 @@ def test_localizer_returns_box_when_match_found(monkeypatch):
 
 
 def test_localizer_returns_not_found_when_no_title_matches(monkeypatch):
-    monkeypatch.setattr(locate, "segmentation", lambda img_path: "fake detections")
+    monkeypatch.setattr(locate, "segmentation", lambda img_path: ("fake detections", "fake_b64"))
+    monkeypatch.setattr(locate, "save_annotated_image", lambda annotated_image_b64, img_path: None)
     monkeypatch.setattr(locate, "OCR", lambda img_path, detections: (["Beloved"], [(0, 0, 10, 10)]))
 
     result = locate.localizer("shelf.png", "Tom Lake")
