@@ -1,5 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "./App.css";
+
+function boxStyle([left, top, right, bottom], { width, height }) {
+  return {
+    position: "absolute",
+    left: `${(left / width) * 100}%`,
+    top: `${(top / height) * 100}%`,
+    width: `${((right - left) / width) * 100}%`,
+    height: `${((bottom - top) / height) * 100}%`,
+  };
+}
 
 function App() {
   const [title, setTitle] = useState("");
@@ -8,9 +18,21 @@ function App() {
   const [classifyError, setClassifyError] = useState("");
 
   const [image, setImage] = useState(null);
+  const [imageUrl, setImageUrl] = useState(null);
+  const [imageSize, setImageSize] = useState(null);
   const [query, setQuery] = useState("");
   const [locateResult, setLocateResult] = useState(null);
   const [locateError, setLocateError] = useState("");
+
+  useEffect(() => {
+    if (!image) {
+      setImageUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(image);
+    setImageUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [image]);
 
   async function handleSubmit() {
     if (!title.trim()) {
@@ -108,7 +130,14 @@ function App() {
 
       <section>
         <h2>Locate a Book on a Shelf</h2>
-        <input type="file" onChange={(e) => setImage(e.target.files[0])} />
+        <input
+          type="file"
+          onChange={(e) => {
+            setImage(e.target.files[0]);
+            setLocateResult(null);
+            setImageSize(null);
+          }}
+        />
         <input
           type="text"
           placeholder="Book title"
@@ -119,7 +148,31 @@ function App() {
 
         {locateError && <p className="error">{locateError}</p>}
 
-        {locateResult && <pre>{JSON.stringify(locateResult, null, 2)}</pre>}
+        {locateResult && !locateResult.result.found && (
+          <p>{locateResult.result.message}</p>
+        )}
+
+        {imageUrl && (
+          <div className="locate-image-wrapper">
+            <img
+              src={imageUrl}
+              alt="Uploaded shelf"
+              onLoad={(e) =>
+                setImageSize({
+                  width: e.target.naturalWidth,
+                  height: e.target.naturalHeight,
+                })
+              }
+              style={{ width: "100%", display: "block" }}
+            />
+            {locateResult?.result.found && imageSize && (
+              <div
+                className="locate-box"
+                style={boxStyle(locateResult.result.box, imageSize)}
+              />
+            )}
+          </div>
+        )}
       </section>
     </div>
   );

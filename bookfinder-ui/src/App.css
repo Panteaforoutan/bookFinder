@@ -167,6 +167,17 @@
   color: #e5484d;
 }
 
+.locate-image-wrapper {
+  position: relative;
+  max-width: 500px;
+  margin: 12px auto 0;
+}
+
+.locate-box {
+  border: 3px solid #e5484d;
+  box-sizing: border-box;
+}
+
 .category-list {
   display: flex;
   flex-direction: column;
