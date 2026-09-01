@@ -215,12 +215,49 @@ def draw_boundary(img_path, boundaries):
     cv2.destroyAllWindows()
 
 
+def localizer_events(img_path, query):
+    """Locate a book matching `query`, yielding progress as each stage completes.
+
+    Same pipeline as `localizer()` (segmentation -> OCR -> fuzzy match), but
+    yields a stage update after each step instead of only returning at the
+    end, so a caller can stream progress to a client.
+
+    Args:
+        img_path: Path to the shelf image file.
+        query: Search string (e.g. a book title) to look for.
+
+    Yields:
+        {"stage": <str>} after each pipeline step, then finally
+        {"done": True, "result": <result>} where <result> is the same dict
+        `localizer()` returns.
+    """
+    yield {"stage": "Scanning shelf..."}
+    segmentations, annotated_image_b64 = segmentation(img_path)
+    save_annotated_image(annotated_image_b64, img_path)
+
+    yield {"stage": "Reading titles..."}
+    titles, boundaries = OCR(img_path, segmentations)
+
+    yield {"stage": "Matching..."}
+    book_index = fuzzy_match(query, titles)
+    if book_index is None:
+        result = {"found": False, "message": f"No match found for '{query}'."}
+    else:
+        box = [int(v) for v in boundaries[book_index]]
+        result = {"found": True, "box": box}
+
+    yield {"done": True, "result": result}
+
+
 # returns structured data which means a Python dict with clearly labeled fields, e.g.:{"found": True, "box": [120, 340, 260, 480]}
 def localizer(img_path, query):
     """Locate a book matching `query` in a shelf photo and return its bounding box.
 
-    Runs segmentation to detect books, OCR to read each title, then fuzzy
-    matches `query` against the recognized titles.
+    Runs `localizer_events()` to completion and returns its final result,
+    discarding the stage updates. For callers (this module's CLI, tests)
+    that just want the destination, not progress along the way — the web
+    app streams `localizer_events()` directly instead so it can relay
+    progress to the frontend.
 
     Args:
         img_path: Path to the shelf image file.
@@ -233,14 +270,9 @@ def localizer(img_path, query):
         Either way, an annotated copy of `img_path` showing every detected
         book is saved alongside it (see `save_annotated_image`).
     """
-    segmentations, annotated_image_b64 = segmentation(img_path)
-    save_annotated_image(annotated_image_b64, img_path)
-    titles, boundaries = OCR(img_path, segmentations)
-    book_index = fuzzy_match(query, titles)
-    if book_index is None:
-        return {"found": False, "message": f"No match found for '{query}'."}
-    box = [int(v) for v in boundaries[book_index]]
-    return {"found": True, "box": box}
+    for event in localizer_events(img_path, query):
+        if event.get("done"):
+            return event["result"]
 
 
 if __name__ == "__main__":

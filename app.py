@@ -1,7 +1,8 @@
+import json
 import os
-from locate import localizer
+from locate import localizer_events
 from classify import classifier
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, Response, stream_with_context
 from werkzeug.utils import secure_filename
 from flask_cors import CORS
 
@@ -37,28 +38,31 @@ def localize_endpoint():
     (the book title/author to search for). Saves the upload to uploads/
     before running localization.
 
-    Returns:
-        JSON {"result": <localizer() output>} on success, or
-        JSON {"error": <str>}, 400 if the image/query is missing or the
-        uploaded file is not an image.
+    Streams newline-delimited JSON as the pipeline progresses:
+        {"stage": <str>} after each pipeline step, then finally
+        {"done": true, "result": <localizer() output>}.
+    On a validation failure (before streaming starts), returns a plain
+    JSON {"error": <str>}, 400 instead.
     """
     image_file = request.files.get("image")
     query = request.form.get("query")
-    
+
     if image_file is None or query is None:
         return jsonify({"error": "Missing image or query"}), 400
-    
+
     filename = secure_filename(image_file.filename)
-    
+
     if not image_file.content_type.startswith("image/"):
         return jsonify({"error": "Uploaded file is not an image"}), 400
 
-    temp_path = os.path.join("uploads", filename) #uploads needs to already exist 
+    temp_path = os.path.join("uploads", filename) #uploads needs to already exist
     image_file.save(temp_path)
-    
-    result = localizer(temp_path, query)
-    
-    return jsonify({"result": result})
+
+    def generate():
+        for event in localizer_events(temp_path, query):
+            yield json.dumps(event) + "\n"
+
+    return Response(stream_with_context(generate()), mimetype="application/x-ndjson")
 
 # This line is optional convention 
 # if __name__ == "__main__": -> "was this file executed directly, or was it imported by something else?"

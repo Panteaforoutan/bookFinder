@@ -23,6 +23,7 @@ function App() {
   const [query, setQuery] = useState("");
   const [locateResult, setLocateResult] = useState(null);
   const [locateError, setLocateError] = useState("");
+  const [locateStage, setLocateStage] = useState("");
   const fileInputRef = useRef(null);
 
   function handleClear() {
@@ -30,6 +31,7 @@ function App() {
     setImageSize(null);
     setLocateResult(null);
     setLocateError("");
+    setLocateStage("");
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -73,6 +75,7 @@ function App() {
   async function handleLocate() {
     setLocateError("");
     setLocateResult(null);
+    setLocateStage("");
 
     const formData = new FormData();
     formData.append("image", image);
@@ -83,12 +86,35 @@ function App() {
         method: "POST",
         body: formData,
       });
-      const data = await response.json();
+
       if (!response.ok) {
+        const data = await response.json();
         setLocateError(data.error || "Something went wrong.");
         return;
       }
-      setLocateResult(data);
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop(); // last entry may be an incomplete line
+
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          const event = JSON.parse(line);
+          if (event.done) {
+            setLocateResult({ result: event.result });
+          } else {
+            setLocateStage(event.stage);
+          }
+        }
+      }
     } catch {
       setLocateError("Something went wrong. Please try again.");
     }
@@ -156,12 +182,16 @@ function App() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
-        <button onClick={handleLocate}>Locate</button>
+        <button onClick={handleLocate} disabled={!!locateStage && !locateResult}>
+          Locate
+        </button>
         <button onClick={handleClear} disabled={!image}>
           Clear
         </button>
 
         {locateError && <p className="error">{locateError}</p>}
+
+        {locateStage && !locateResult && <p>{locateStage}</p>}
 
         {locateResult && !locateResult.result.found && (
           <p>{locateResult.result.message}</p>
