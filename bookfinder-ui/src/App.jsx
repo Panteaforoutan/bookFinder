@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import "./App.css";
 
 function boxStyle([left, top, right, bottom], { width, height }) {
@@ -23,6 +23,17 @@ function App() {
   const [query, setQuery] = useState("");
   const [locateResult, setLocateResult] = useState(null);
   const [locateError, setLocateError] = useState("");
+  const fileInputRef = useRef(null);
+
+  function handleClear() {
+    setImage(null);
+    setImageSize(null);
+    setLocateResult(null);
+    setLocateError("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }
 
   useEffect(() => {
     if (!image) {
@@ -132,6 +143,7 @@ function App() {
         <h2>Locate a Book on a Shelf</h2>
         <input
           type="file"
+          ref={fileInputRef}
           onChange={(e) => {
             setImage(e.target.files[0]);
             setLocateResult(null);
@@ -145,6 +157,9 @@ function App() {
           onChange={(e) => setQuery(e.target.value)}
         />
         <button onClick={handleLocate}>Locate</button>
+        <button onClick={handleClear} disabled={!image}>
+          Clear
+        </button>
 
         {locateError && <p className="error">{locateError}</p>}
 
