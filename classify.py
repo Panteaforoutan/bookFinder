@@ -24,13 +24,36 @@ GEMINI_API_KEY = os.environ["GEMINI_API_KEY"]
 GEMINI_MODEL = "gemini-3.6-flash"
 
 
+TITLE_MATCH_THRESHOLD = 0.5
+
+
+def containment(query, title):
+    """Fraction of `query`'s words that also appear in `title`.
+
+    Unlike Jaccard similarity, this doesn't penalize `title` for having
+    extra words beyond `query` (e.g. a subtitle), which matters since
+    Google Books often returns a fuller canonical title than what the
+    user typed.
+
+    Returns:
+        Float in [0, 1]: |query_words & title_words| / |query_words|.
+        Returns 0.0 if `query` has no words.
+    """
+    query_words = set(query.lower().split())
+    title_words = set(title.lower().split())
+    if not query_words:
+        return 0.0
+    return len(query_words & title_words) / len(query_words)
+
+
 def fetch_description(books_service, title):
     """Look up a book by title via the Google Books API.
 
     Returns:
         A Book with title/author/description populated from the top
         match, or with author and description left as None if no
-        match was found (title falls back to the input query).
+        match was found or the top match's title doesn't sufficiently
+        overlap with the query (title falls back to the input query).
     """
     request = books_service.volumes().list(q=title, maxResults=1)
     response = request.execute()
@@ -40,8 +63,13 @@ def fetch_description(books_service, title):
         return Book(title=title, author=None, description=None)
 
     info = items[0]["volumeInfo"]
+    result_title = info.get("title", title)
+
+    if containment(title, result_title) < TITLE_MATCH_THRESHOLD:
+        return Book(title=title, author=None, description=None)
+
     return Book(
-        title=info.get("title", title),
+        title=result_title,
         author=info.get("authors"),
         description=info.get("description"),
     )
