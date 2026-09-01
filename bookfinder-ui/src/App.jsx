@@ -86,17 +86,21 @@ function App() {
         {classifyError && <p className="error">{classifyError}</p>}
 
         {/* {result && <pre>{JSON.stringify(result, null, 2)}</pre>} */}
-        {result && (
-          <div>
-            <h3>{result.result.title} by {result.result.author}</h3>
-            <ul className="category-list">
-              {result.result.categories.map((cat, index) => (
-                <li key={index}>
-                  <strong>{cat.category}</strong>
-                </li>
-              ))}
-            </ul>
-          </div>
+        {result && result.result.message ? (
+          <p>{result.result.message}</p>
+        ) : (
+          result && (
+            <div>
+              <h3>{result.result.title} by {result.result.author}</h3>
+              <ul className="category-list">
+                {result.result.categories.map((cat, index) => (
+                  <li key={index}>
+                    <strong>{cat.category}</strong>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )
         )}
       </section>
 
