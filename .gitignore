@@ -13,6 +13,9 @@ uploads/*
 # macOS
 .DS_Store
 
+# Claude Code local tooling config
+.claude/
+
 # node / frontend
 bookfinder-ui/node_modules/
 bookfinder-ui/dist/

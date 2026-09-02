@@ -1,5 +1,8 @@
 import { useState, useEffect, useRef } from "react";
+import heic2any from "heic2any";
 import "./App.css";
+
+const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 function boxStyle([left, top, right, bottom], { width, height }) {
   return {
@@ -9,6 +12,20 @@ function boxStyle([left, top, right, bottom], { width, height }) {
     width: `${((right - left) / width) * 100}%`,
     height: `${((bottom - top) / height) * 100}%`,
   };
+}
+
+// iOS Safari often reports an empty file.type for HEIC photos, so the
+// filename extension is checked as a fallback rather than relying on
+// the MIME type alone.
+function isHeic(file) {
+  const type = file.type.toLowerCase();
+  const name = file.name.toLowerCase();
+  return (
+    type === "image/heic" ||
+    type === "image/heif" ||
+    name.endsWith(".heic") ||
+    name.endsWith(".heif")
+  );
 }
 
 function App() {
@@ -24,6 +41,8 @@ function App() {
   const [locateResult, setLocateResult] = useState(null);
   const [locateError, setLocateError] = useState("");
   const [locateStage, setLocateStage] = useState("");
+  const [fileError, setFileError] = useState("");
+  const [converting, setConverting] = useState(false);
   const fileInputRef = useRef(null);
 
   function handleClear() {
@@ -32,9 +51,47 @@ function App() {
     setLocateResult(null);
     setLocateError("");
     setLocateStage("");
+    setFileError("");
+    setConverting(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
+  }
+
+  async function handleFileSelect(e) {
+    const file = e.target.files[0];
+    setLocateResult(null);
+    setImageSize(null);
+    setFileError("");
+
+    if (!file) {
+      setImage(null);
+      return;
+    }
+
+    if (isHeic(file)) {
+      setConverting(true);
+      try {
+        const converted = await heic2any({ blob: file, toType: "image/jpeg" });
+        setImage(Array.isArray(converted) ? converted[0] : converted);
+      } catch {
+        setFileError("Couldn't convert this HEIC image. Please try a different photo.");
+        setImage(null);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+      } finally {
+        setConverting(false);
+      }
+      return;
+    }
+
+    if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+      setFileError("Please select a JPEG, PNG, or WEBP image.");
+      setImage(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+
+    setImage(file);
   }
 
   useEffect(() => {
@@ -169,12 +226,10 @@ function App() {
         <h2>Locate a Book on a Shelf</h2>
         <input
           type="file"
+          accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
           ref={fileInputRef}
-          onChange={(e) => {
-            setImage(e.target.files[0]);
-            setLocateResult(null);
-            setImageSize(null);
-          }}
+          disabled={converting}
+          onChange={handleFileSelect}
         />
         <input
           type="text"
@@ -182,12 +237,19 @@ function App() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
-        <button onClick={handleLocate} disabled={!!locateStage && !locateResult}>
+        <button
+          onClick={handleLocate}
+          disabled={(!!locateStage && !locateResult) || converting || !image}
+        >
           Locate
         </button>
         <button onClick={handleClear} disabled={!image}>
           Clear
         </button>
+
+        {converting && <p>Converting HEIC image...</p>}
+
+        {fileError && <p className="error">{fileError}</p>}
 
         {locateError && <p className="error">{locateError}</p>}
 
