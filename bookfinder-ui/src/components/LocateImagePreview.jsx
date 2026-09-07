@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { boxStyle } from "../utils/image";
+import LocateProgress from "./LocateProgress";
 
-function LocateImagePreview({ imageUrl, box }) {
+function LocateImagePreview({ imageUrl, box, currentStage }) {
   const [imageSize, setImageSize] = useState(null);
 
   if (!imageUrl) return null;
@@ -21,6 +22,11 @@ function LocateImagePreview({ imageUrl, box }) {
       />
       {box && imageSize && (
         <div className="locate-box" style={boxStyle(box, imageSize)} />
+      )}
+      {currentStage && (
+        <div className="locate-progress-overlay">
+          <LocateProgress currentStage={currentStage} />
+        </div>
       )}
     </div>
   );

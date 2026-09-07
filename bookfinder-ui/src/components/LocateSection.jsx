@@ -112,8 +112,6 @@ function LocateSection() {
 
       {locateError && <p className="error">{locateError}</p>}
 
-      {locateStage && !locateResult && <p>{locateStage}</p>}
-
       {locateResult && !locateResult.result.found && (
         <p>{locateResult.result.message}</p>
       )}
@@ -121,6 +119,7 @@ function LocateSection() {
       <LocateImagePreview
         imageUrl={imageUrl}
         box={locateResult?.result.found ? locateResult.result.box : null}
+        currentStage={locateResult ? null : locateStage}
       />
     </section>
   );

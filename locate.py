@@ -231,14 +231,14 @@ def localizer_events(img_path, query):
         {"done": True, "result": <result>} where <result> is the same dict
         `localizer()` returns.
     """
-    yield {"stage": "Scanning shelf..."}
+    yield {"stage": "scan", "label": "Scanning shelf..."}
     segmentations, annotated_image_b64 = segmentation(img_path)
     save_annotated_image(annotated_image_b64, img_path)
 
-    yield {"stage": "Reading titles..."}
+    yield {"stage": "ocr", "label": "Reading titles..."}
     titles, boundaries = OCR(img_path, segmentations)
 
-    yield {"stage": "Matching..."}
+    yield {"stage": "match", "label": "Matching..."}
     book_index = fuzzy_match(query, titles)
     if book_index is None:
         result = {"found": False, "message": f"No match found for '{query}'."}
