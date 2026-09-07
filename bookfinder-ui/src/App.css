@@ -171,11 +171,31 @@
   position: relative;
   max-width: 500px;
   margin: 12px auto 0;
+  overflow: hidden;
 }
 
 .locate-box {
-  border: 3px solid #e5484d;
   box-sizing: border-box;
+  border-radius: 4px;
+  box-shadow:
+    0 0 0 9999px rgba(0, 0, 0, 0.55),
+    0 0 16px 4px rgba(255, 255, 255, 0.6);
+  border: 2px solid #fff;
+  animation: locate-box-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes locate-box-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 9999px rgba(0, 0, 0, 0.55),
+      0 0 16px 4px rgba(255, 255, 255, 0.6);
+  }
+  50% {
+    box-shadow:
+      0 0 0 9999px rgba(0, 0, 0, 0.55),
+      0 0 24px 8px rgba(255, 255, 255, 0.9);
+  }
 }
 
 .locate-progress-overlay {
