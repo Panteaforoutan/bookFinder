@@ -34,6 +34,7 @@ function LocateSection() {
     setLocateResult(null);
     setLocateError("");
     setLocateStage("");
+    setQuery("");
     uploadFieldRef.current?.reset();
   }
 
@@ -86,29 +87,34 @@ function LocateSection() {
   }
 
   return (
-    <section>
+    <section className="panel">
       <h2>Locate a Book on a Shelf</h2>
-      <ImageUploadField
-        ref={uploadFieldRef}
-        onImageSelected={handleImageSelected}
-        converting={converting}
-        setConverting={setConverting}
-      />
-      <input
-        type="text"
-        placeholder="Book title"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-      />
-      <button
-        onClick={handleLocate}
-        disabled={(!!locateStage && !locateResult) || converting || !image}
-      >
-        Locate
-      </button>
-      <button onClick={handleClear} disabled={!image}>
-        Clear
-      </button>
+      <div className="field-group">
+        <ImageUploadField
+          ref={uploadFieldRef}
+          onImageSelected={handleImageSelected}
+          converting={converting}
+          setConverting={setConverting}
+        />
+        <input
+          type="text"
+          placeholder="Book title"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+        <div className="button-row">
+          <button
+            className="btn-primary"
+            onClick={handleLocate}
+            disabled={(!!locateStage && !locateResult) || converting || !image}
+          >
+            Locate
+          </button>
+          <button className="btn-secondary" onClick={handleClear} disabled={!image}>
+            Clear
+          </button>
+        </div>
+      </div>
 
       {locateError && <p className="error">{locateError}</p>}
 

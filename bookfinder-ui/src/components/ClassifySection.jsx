@@ -32,24 +32,42 @@ function ClassifySection() {
     }
   }
 
+  function handleClear() {
+    setTitle("");
+    setAuthor("");
+    setResult(null);
+    setClassifyError("");
+  }
+
   return (
-    <section>
+    <section className="panel">
       <h2>Find a Book's Section</h2>
-      <input
-        type="text"
-        placeholder="Title"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-      />
-      <input
-        type="text"
-        placeholder="Author"
-        value={author}
-        onChange={(e) => setAuthor(e.target.value)}
-      />
-      <button onClick={handleSubmit} disabled={!title.trim()}>
-        Classify
-      </button>
+      <div className="field-group">
+        <input
+          type="text"
+          placeholder="Title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+        />
+        <input
+          type="text"
+          placeholder="Author"
+          value={author}
+          onChange={(e) => setAuthor(e.target.value)}
+        />
+        <div className="button-row">
+          <button className="btn-primary" onClick={handleSubmit} disabled={!title.trim()}>
+            Classify
+          </button>
+          <button
+            className="btn-secondary"
+            onClick={handleClear}
+            disabled={!title && !author && !result}
+          >
+            Clear
+          </button>
+        </div>
+      </div>
 
       {classifyError && <p className="error">{classifyError}</p>}
 

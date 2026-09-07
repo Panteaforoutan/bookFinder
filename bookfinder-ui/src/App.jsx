@@ -4,11 +4,15 @@ import "./App.css";
 
 function App() {
   return (
-    <div>
-      <h1>bookFinder</h1>
-      <ClassifySection />
-      <hr />
-      <LocateSection />
+    <div className="app">
+      <header className="app-header">
+        <h1>bookFinder</h1>
+        <p className="tagline">Classify any title, then find it on the shelf.</p>
+      </header>
+      <main className="sections">
+        <ClassifySection />
+        <LocateSection />
+      </main>
     </div>
   );
 }
