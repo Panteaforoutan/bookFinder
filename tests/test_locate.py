@@ -7,6 +7,14 @@ import locate
 
 #python -m pytest tests/test_locate.py -v
 
+
+@pytest.fixture(autouse=True)
+def clear_scan_cache():
+    """Reset locate's module-level scan cache so tests don't leak state into
+    each other - two tests using identical-content images would otherwise
+    hash to the same cache key and see each other's cached OCR results."""
+    locate.scan_cache.clear()
+
 def test_segmentation_returns_predictions_list(monkeypatch):
     fake_predictions = [{"x": 1, "y": 2, "width": 3, "height": 4}]
     fake_client = MagicMock()
@@ -100,7 +108,10 @@ def test_fuzzy_match_returns_none_for_empty_titles():
     assert locate.fuzzy_match("Tom Lake", []) is None
 
 
-def test_localizer_returns_box_when_match_found(monkeypatch):
+def test_localizer_returns_box_when_match_found(monkeypatch, tmp_path):
+    img_path = tmp_path / "shelf.png"
+    Image.new("RGB", (10, 10)).save(img_path)
+
     monkeypatch.setattr(locate, "segmentation", lambda img_path: ("fake detections", "fake_b64"))
     monkeypatch.setattr(locate, "save_annotated_image", lambda annotated_image_b64, img_path: None)
     monkeypatch.setattr(
@@ -111,17 +122,20 @@ def test_localizer_returns_box_when_match_found(monkeypatch):
         ),
     )
 
-    result = locate.localizer("shelf.png", "Tom Lake")
+    result = locate.localizer(str(img_path), "Tom Lake")
 
     # boundaries[1] is the exact match; box values are truncated to int
     assert result == {"found": True, "box": [5, 5, 15, 15]}
 
 
-def test_localizer_returns_not_found_when_no_title_matches(monkeypatch):
+def test_localizer_returns_not_found_when_no_title_matches(monkeypatch, tmp_path):
+    img_path = tmp_path / "shelf.png"
+    Image.new("RGB", (10, 10)).save(img_path)
+
     monkeypatch.setattr(locate, "segmentation", lambda img_path: ("fake detections", "fake_b64"))
     monkeypatch.setattr(locate, "save_annotated_image", lambda annotated_image_b64, img_path: None)
     monkeypatch.setattr(locate, "OCR", lambda img_path, detections: (["Beloved"], [(0, 0, 10, 10)]))
 
-    result = locate.localizer("shelf.png", "Tom Lake")
+    result = locate.localizer(str(img_path), "Tom Lake")
 
     assert result == {"found": False, "message": "No match found for 'Tom Lake'."}

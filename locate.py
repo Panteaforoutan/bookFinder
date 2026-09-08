@@ -9,6 +9,7 @@ fuzzy-match the search query against the recognized titles (`fuzzy_match`)
 import argparse
 import base64
 import os
+import hashlib
 
 from dotenv import load_dotenv
 from inference_sdk import InferenceHTTPClient
@@ -20,6 +21,38 @@ load_dotenv()  # reads .env in your project root and loads it into the environme
 
 ROBOFLOW_API_KEY = os.environ["ROBOFLOW_API_KEY"]
 
+scan_cache = {}  # maps image file hash -> (titles, boundaries) for that shelf photo
+
+def hash_image(img_path):
+    """Compute a hash of an image file's contents.
+
+    Args:
+        img_path: Path to the image file.
+
+    Returns:
+        Hexadecimal string of the SHA256 hash of the file's bytes.
+    """
+    with open(img_path, "rb") as f:
+        img_bytes = f.read()
+    return hashlib.sha256(img_bytes).hexdigest()
+
+def store_scan(img_path, titles, boundaries, scan_cache):
+    """Add the hash of an image for a given shelf photo to the cache.
+
+    Args:
+        img_path: Path to the original shelf image. 
+        scan_cache: List of cached images.
+    """
+    scan_cache[hash_image(img_path)] = (titles, boundaries)
+
+def get_cached_scan(img_path, scan_cache):
+    """Retrieve the cached item for a given shelf photo.
+
+    Args:
+        img_path: Path to the original shelf image.
+        scan_cache: List of cached images.
+    """
+    return scan_cache.get(hash_image(img_path))
 
 def segmentation(img):
     """Run book segmentation on an image via the Roboflow workflow API.
@@ -231,13 +264,20 @@ def localizer_events(img_path, query):
         {"done": True, "result": <result>} where <result> is the same dict
         `localizer()` returns.
     """
-    yield {"stage": "scan", "label": "Scanning shelf..."}
-    segmentations, annotated_image_b64 = segmentation(img_path)
-    save_annotated_image(annotated_image_b64, img_path)
+    cached_scan = get_cached_scan(img_path, scan_cache)
 
-    yield {"stage": "ocr", "label": "Reading titles..."}
-    titles, boundaries = OCR(img_path, segmentations)
+    if cached_scan is None:
+        yield {"stage": "scan", "label": "Scanning shelf..."}
+        segmentations, annotated_image_b64 = segmentation(img_path)
+        save_annotated_image(annotated_image_b64, img_path)
 
+        yield {"stage": "ocr", "label": "Reading titles..."}
+        titles, boundaries = OCR(img_path, segmentations)
+        
+        store_scan(img_path, titles, boundaries, scan_cache)
+    else:
+        titles, boundaries = cached_scan
+    
     yield {"stage": "match", "label": "Matching..."}
     book_index = fuzzy_match(query, titles)
     if book_index is None:
