@@ -1,12 +1,12 @@
 :root {
   --text: #6b6375;
   --text-h: #08060d;
-  --bg: #fff;
+  --bg: #eeeef1;
   --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #59b1fe98;
-  --accent-bg: rgba(59, 206, 255, 0.1);
-  --accent-border: rgba(141, 139, 242, 0.5);
+  --code-bg: #e3e3e6;
+  --accent: #000000;
+  --accent-bg: rgba(154, 177, 184, 0.336);
+  --accent-border: rgba(120, 119, 155, 0.5);
   --social-bg: rgba(244, 243, 236, 0.5);
   --shadow:
     rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
@@ -37,9 +37,9 @@
     --bg: #16171d;
     --border: #2e303a;
     --code-bg: #1f2028;
-    --accent: #749ef9;
-    --accent-bg: rgba(52, 157, 237, 0.305);
-    --accent-border: rgba(132, 150, 252, 0.662);
+    --accent: #bcc3d3;
+    --accent-bg: rgba(110, 119, 126, 0.305);
+    --accent-border: rgba(89, 92, 108, 0.662);
     --social-bg: rgba(47, 48, 58, 0.5);
     --shadow:
       rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
@@ -59,7 +59,6 @@ body {
   max-width: 100%;
   margin: 0 auto;
   text-align: center;
-  border-inline: 1px solid var(--border);
   min-height: 100svh;
   display: flex;
   flex-direction: column;
@@ -76,7 +75,7 @@ h2 {
 h1 {
   font-size: 56px;
   letter-spacing: -1.68px;
-  margin: 32px 0;
+  margin: 10px 0;
 
   @media (max-width: 1024px) {
     font-size: 36px;
@@ -168,10 +167,15 @@ input[type="file"]::file-selector-button:hover {
 }
 
 button {
+  appearance: none;
+  -webkit-appearance: none;
   font: inherit;
+  font-family: var(--mono);
+  font-size: 13px;
   font-weight: 500;
-  border-radius: 8px;
-  padding: 10px 20px;
+  letter-spacing: 0.4px;
+  border-radius: 999px;
+  padding: 8px 32px;
   border: 1px solid transparent;
   cursor: pointer;
   transition: opacity 0.2s, transform 0.1s, background 0.2s;

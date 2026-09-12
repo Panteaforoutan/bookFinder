@@ -98,7 +98,7 @@ function LocateSection() {
         />
         <input
           type="text"
-          placeholder="Book title"
+          placeholder="Title"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />

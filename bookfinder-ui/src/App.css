@@ -19,6 +19,7 @@
 .tagline {
   color: var(--text);
   font-size: 17px;
+  padding-top: 8px;
 }
 
 .sections {
@@ -31,12 +32,12 @@
 
 .panel {
   width: 100%;
-  max-width: 480px;
+  max-width: 430px;
   box-sizing: border-box;
   background: var(--code-bg);
   border: 1px solid var(--border);
   border-radius: 16px;
-  padding: 32px;
+  padding: 24px;
   box-shadow: var(--shadow);
 }
 
@@ -58,8 +59,8 @@
 }
 
 .btn-primary {
-  background: var(--accent);
-  color: #fff;
+  background: #030515;
+  color: #f5f5f7;
 }
 
 .btn-primary:not(:disabled):hover {
@@ -67,13 +68,12 @@
 }
 
 .btn-secondary {
-  background: transparent;
-  border-color: var(--border);
-  color: var(--text-h);
+  background: #030515;
+  color: #f5f5f7;
 }
 
 .btn-secondary:not(:disabled):hover {
-  background: var(--social-bg);
+  opacity: 0.9;
 }
 
 .error {
@@ -101,12 +101,14 @@
 }
 
 @keyframes locate-box-pulse {
+
   0%,
   100% {
     box-shadow:
-      0 0 0 9999px rgba(0, 0, 0, 0.55),
+      0 0 0 9999px rgba(12, 2, 2, 0.55),
       0 0 16px 4px rgba(255, 255, 255, 0.6);
   }
+
   50% {
     box-shadow:
       0 0 0 9999px rgba(0, 0, 0, 0.55),
