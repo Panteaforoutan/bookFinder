@@ -48,7 +48,7 @@ function LocateSection() {
     formData.append("query", query);
 
     try {
-      const response = await fetch("http://127.0.0.1:5001/locate", {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/locate`, {
         method: "POST",
         body: formData,
       });

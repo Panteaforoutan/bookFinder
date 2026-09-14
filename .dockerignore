@@ -4,3 +4,5 @@ __pycache__
 *.pyc
 .env
 uploads/
+bookfinder-ui
+old files

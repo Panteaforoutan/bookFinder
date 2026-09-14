@@ -75,17 +75,5 @@ def localize_endpoint():
 # else imports app from this module
 if __name__ == "__main__":
     # this is the actual call that starts the server loop. It has to be invoked somewhere
-    app.run(debug=True, port=5001)
+    app.run(port=5001)
     
-# curl (Client URL)
-# curl -X POST http://127.0.0.1:5001/classify \
-#   -H "Content-Type: application/json" \
-#   -d '{"title": "Dune", "author": "Frank Herbert"}'
-
-# curl -X POST http://127.0.0.1:5001/localize \
-#   -H "Content-Type: application/json" \
-#   -d '{"img_path": "shelf.png" ,"title": "Tom Lake"}'
-
-# curl -X POST http://127.0.0.1:5001/localize \
-#   -F "image=@shelf.png" \
-#   -F "query=Tom Lake"
