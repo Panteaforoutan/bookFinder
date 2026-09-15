@@ -28,9 +28,6 @@ jobs:
         run: npm run build
         working-directory: bookfinder-ui
 
-      - name: Add custom domain file
-        run: cp CNAME bookfinder-ui/dist/CNAME
-
       - uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3
